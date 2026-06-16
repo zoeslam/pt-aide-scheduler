@@ -475,6 +475,8 @@ function generateSchedule(session, submissions, countOverrides = {}) {
 
 // --- Page routes ---
 
+app.get('/', (_req, res) => res.redirect('/admin'));
+
 app.get('/admin', (req, res) =>
   res.sendFile(path.join(__dirname, 'public/admin/index.html')));
 
