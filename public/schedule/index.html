@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peak PT — Schedule</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    .schedule-cal { font-size: 0.85rem; }
+
+    /* ICS download card */
+    .ics-card { background: #f0fdf4; border: 1px solid #86efac; border-radius: 10px; padding: 20px 24px; margin-top: 28px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .ics-card label { font-size: 0.875rem; font-weight: 600; color: #374151; white-space: nowrap; }
+    .ics-card select { flex: 1; min-width: 160px; max-width: 280px; }
+    .ics-card .ics-hint { flex-basis: 100%; font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+    /* Legend */
+    .schedule-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+
+    .lunch-note { text-align: center; color: #c0392b; font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+    .schedule-cal-title { text-align: center; font-size: 1.3rem; font-weight: 800; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <h1>Peak PT Aide Scheduler</h1>
+      <p class="subtitle">Employee Schedule</p>
+    </header>
+
+    <main id="app">
+      <div id="state-loading" style="text-align:center;padding:60px 20px;color:var(--muted)">Loading schedule&hellip;</div>
+
+      <div id="state-error" class="card" style="display:none;text-align:center;padding:40px">
+        <h2>Schedule Not Available</h2>
+        <p id="error-msg" style="color:var(--muted);margin-top:8px">The schedule has not been generated yet, or this link is invalid.</p>
+        <p style="color:var(--muted);font-size:0.9rem;margin-top:8px">Check with your manager for the correct link.</p>
+      </div>
+
+      <div id="state-ready" style="display:none">
+        <div id="schedule-output"></div>
+
+        <div class="ics-card">
+          <label for="name-select">Download your shifts:</label>
+          <select id="name-select">
+            <option value="">— Select your name —</option>
+          </select>
+          <button id="btn-download-ics" class="btn btn-primary" disabled>Download .ics</button>
+          <p class="ics-hint">Opens in Google Calendar, Apple Calendar, Outlook, and other calendar apps. Imports all your shifts for the month at once.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/schedule/schedule.js"></script>
+</body>
+</html>

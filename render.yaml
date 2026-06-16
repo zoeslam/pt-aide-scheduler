@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: peak-pt-scheduler
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: DB_PATH
+        value: /data/scheduler.db
+      - key: ANTHROPIC_API_KEY
+        sync: false
+    disk:
+      name: sqlite-data
+      mountPath: /data
+      sizeGB: 1

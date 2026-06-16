@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peak PT — Schedule Admin</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    /* Step indicator */
+    .step-indicator { display: flex; gap: 4px; margin-bottom: 32px; align-items: center; flex-wrap: wrap; }
+    .step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; background: var(--border); color: var(--muted); flex-shrink: 0; }
+    .step-dot.active { background: var(--blue); color: white; }
+    .step-dot.done { background: var(--green); color: white; }
+    .step-connector { flex: 1; height: 2px; background: var(--border); min-width: 12px; }
+    .step-connector.done { background: var(--green); }
+
+    /* Considerations */
+    .consideration-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .consideration-item input[type="text"] { flex: 1; }
+    .consideration-item .default-badge { font-size: 0.7rem; background: #e8f0fe; color: var(--blue); padding: 2px 6px; border-radius: 10px; white-space: nowrap; flex-shrink: 0; }
+    .btn-remove { background: none; border: none; cursor: pointer; color: var(--red); font-size: 1.1rem; padding: 2px 6px; }
+    .btn-remove:hover { background: #fff0f0; border-radius: 4px; }
+
+    /* Link box */
+    .link-box { display: flex; gap: 8px; align-items: center; background: #f5f5f5; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; }
+    .link-box input { flex: 1; border: none; background: transparent; font-family: monospace; font-size: 0.9rem; color: #333; }
+    .link-box input:focus { outline: none; }
+
+    /* Dashboard */
+    .employee-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+    .employee-chip { background: var(--green-light); border: 1px solid var(--green); border-radius: 16px; padding: 4px 8px 4px 12px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
+    .btn-remove-employee { background: none; border: none; cursor: pointer; color: #6b7280; font-size: 1rem; line-height: 1; padding: 0 2px; }
+    .btn-remove-employee:hover { color: var(--red); }
+    .counter-badge { font-size: 2.5rem; font-weight: 700; color: var(--blue); }
+
+    /* Action bar */
+    .action-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .mod-panel { background: #fffbe6; border: 1px solid #f5c518; border-radius: 8px; padding: 16px; margin-top: 16px; }
+    .mod-banner { background: #fffbe6; border-left: 4px solid #f5c518; padding: 10px 14px; margin-bottom: 16px; font-size: 0.875rem; }
+    .warnings-banner { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 10px 14px; margin-bottom: 16px; font-size: 0.85rem; }
+
+    /* Summary table */
+    .summary-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-top: 16px; }
+    .summary-table th { text-align: left; padding: 8px 12px; background: #f5f5f5; border-bottom: 2px solid var(--border); }
+    .summary-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+
+    /* Availability table */
+    .avail-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .avail-table th { padding: 6px 10px; background: #f5f5f5; border-bottom: 2px solid var(--border); text-align: center; white-space: nowrap; }
+    .avail-table th:first-child { text-align: left; }
+    .avail-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; }
+    .avail-table td:first-child { text-align: left; font-weight: 500; }
+    .avail-table td.unavail { color: var(--muted); }
+    .avail-table td.time-off { font-size: 0.78rem; color: var(--muted); max-width: 160px; white-space: normal; text-align: left; }
+
+    /* Legend */
+    .schedule-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header no-print">
+      <h1>Peak PT Aide Scheduler</h1>
+      <p class="subtitle">Admin Dashboard</p>
+    </header>
+
+    <nav class="step-indicator no-print" id="step-indicator" aria-label="Progress"></nav>
+
+    <main id="app">
+      <!-- Step 1: Setup -->
+      <section id="step-1" class="card" style="max-width:640px">
+        <h2>Setup — New Month</h2>
+        <p style="color:var(--muted);margin-bottom:20px">Choose the month and add any special considerations. Default rules are added automatically.</p>
+        <div class="field">
+          <label for="month-input">Schedule Month</label>
+          <input type="month" id="month-input">
+        </div>
+        <div class="field" style="margin-top:16px">
+          <label for="custom-input">Special Considerations <span style="color:var(--muted);font-weight:400">(optional — one per line)</span></label>
+          <textarea id="custom-input" rows="4" placeholder="e.g. No employee should open and close on the same day&#10;Jordan is on vacation the week of the 14th"></textarea>
+        </div>
+        <div style="margin-top:20px">
+          <button id="btn-step1-next" class="btn btn-primary">Next: Review Criteria</button>
+        </div>
+      </section>
+
+      <!-- Step 2: Review criteria -->
+      <section id="step-2" class="card" style="display:none;max-width:700px">
+        <h2>Review Criteria</h2>
+        <p style="color:var(--muted);margin-bottom:20px">Edit, remove, or add rules before the link is sent to employees.</p>
+        <div id="criteria-list"></div>
+        <button id="btn-add-criterion" class="btn btn-secondary" style="margin-top:8px">+ Add Criterion</button>
+        <div style="display:flex;gap:12px;margin-top:24px">
+          <button id="btn-step2-back" class="btn btn-secondary">Back</button>
+          <button id="btn-step2-confirm" class="btn btn-primary">Looks Good — Get Employee Link</button>
+        </div>
+      </section>
+
+      <!-- Step 3: Employee link -->
+      <section id="step-3" class="card" style="display:none;max-width:640px">
+        <h2>Share Employee Link</h2>
+        <p style="color:var(--muted);margin-bottom:20px">Send this link to your employees so they can submit availability.</p>
+        <div class="link-box">
+          <input type="text" id="employee-link" readonly>
+          <button id="btn-copy-link" class="btn btn-secondary">Copy</button>
+        </div>
+        <p id="copy-feedback" style="color:var(--green);font-size:0.85rem;margin-top:8px;display:none">Copied!</p>
+        <div style="display:flex;gap:12px;margin-top:24px">
+          <button id="btn-step3-back" class="btn btn-secondary">Back</button>
+          <button id="btn-step3-next" class="btn btn-primary">Go to Dashboard</button>
+        </div>
+      </section>
+
+      <!-- Step 4: Submissions dashboard -->
+      <section id="step-4" class="card" style="display:none">
+        <h2>Submissions Dashboard</h2>
+        <div style="display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap">
+          <div>
+            <div class="counter-badge" id="submission-count">0</div>
+            <div style="color:var(--muted);font-size:0.9rem">employees submitted</div>
+          </div>
+          <div style="flex:1;min-width:200px">
+            <ul class="employee-list" id="employee-list"></ul>
+            <p id="waiting-msg" style="color:var(--muted);font-size:0.85rem">Waiting for submissions&hellip;</p>
+          </div>
+        </div>
+        <div style="margin-top:24px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button id="btn-step4-back" class="btn btn-secondary">Back</button>
+          <button id="btn-generate" class="btn btn-primary" disabled>Generate Schedule</button>
+          <span id="generate-hint" style="color:var(--muted);font-size:0.85rem">Need at least 2 submissions</span>
+        </div>
+      </section>
+
+      <!-- Steps 5–7: Schedule preview -->
+      <section id="step-schedule" style="display:none">
+        <div class="action-bar no-print">
+          <button id="btn-step5-back" class="btn btn-secondary">&#8592; Dashboard</button>
+          <button id="btn-print" class="btn btn-primary">Print / Download PDF</button>
+          <button id="btn-request-mod" class="btn btn-secondary">Request Modification</button>
+          <button id="btn-new-month" class="btn btn-danger">Start New Month</button>
+        </div>
+
+        <div id="schedule-share-box" class="link-box no-print" style="margin-bottom:16px;display:none">
+          <span style="font-size:0.85rem;white-space:nowrap;color:var(--muted)">Share with employees:</span>
+          <input type="text" id="schedule-link" readonly>
+          <button id="btn-copy-schedule-link" class="btn btn-secondary">Copy</button>
+        </div>
+        <p id="schedule-copy-feedback" class="no-print" style="color:var(--green);font-size:0.85rem;margin-bottom:12px;display:none">Copied!</p>
+
+        <div id="mod-banner" class="mod-banner no-print" style="display:none">
+          <strong>Last modification note:</strong> <span id="mod-banner-text"></span>
+        </div>
+
+        <div id="mod-panel" class="mod-panel no-print" style="display:none">
+          <h3 style="margin:0 0 8px">Request a Modification</h3>
+          <p style="font-size:0.875rem;color:var(--muted);margin-bottom:12px">Describe what you'd like changed and the schedule will be regenerated.</p>
+          <div class="field">
+            <textarea id="mod-note" rows="3" placeholder="e.g. Move Jordan's Tuesday shift to Wednesday. Give Sam fewer hours this month."></textarea>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:10px">
+            <button id="btn-regenerate" class="btn btn-primary">Regenerate Schedule</button>
+            <button id="btn-cancel-mod" class="btn btn-secondary">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Schedule output (calendar table) -->
+        <div id="schedule-output"></div>
+
+        <!-- Availability summary (screen only) -->
+        <div id="avail-table-container" class="no-print" style="margin-top:32px;display:none;overflow-x:auto">
+          <h3>Availability Summary</h3>
+          <table class="avail-table" id="avail-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th>
+                <th>Time Off</th>
+                <th>Days/Wk</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Hours summary (screen only) -->
+        <div id="summary-section" class="no-print" style="margin-top:32px">
+          <h3>Hours Summary</h3>
+          <table class="summary-table" id="summary-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Total Hours</th>
+                <th>Monday</th>
+                <th>Tuesday</th>
+                <th>Wednesday</th>
+                <th>Thursday</th>
+                <th>Friday</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/admin/admin.js"></script>
+</body>
+</html>

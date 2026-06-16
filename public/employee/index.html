@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Peak PT — Submit Availability</title>
+  <link rel="stylesheet" href="/shared.css">
+  <style>
+    .name-section { max-width: 480px; margin: 0 auto; }
+
+    /* Master toggles */
+    .master-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; padding: 14px 18px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; }
+    .master-controls strong { flex: 1; min-width: 200px; font-size: 0.9rem; }
+
+    /* Calendar grid */
+    .calendar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 8px; }
+    .week-label { grid-column: 1 / -1; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 8px 0 2px; border-top: 1px solid var(--border); margin-top: 6px; }
+    .week-label:first-child { border-top: none; margin-top: 0; }
+
+    /* Day card */
+    .day-card { border: 2px solid var(--border); border-radius: 8px; padding: 10px 12px; background: #fff; transition: border-color 0.15s; }
+    .day-card.available { border-color: var(--green); }
+    .day-card.unavailable { background: #f8f8f8; opacity: 0.7; }
+
+    .day-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; margin-bottom: 8px; }
+    .day-abbr { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .day-date-lbl { font-size: 0.9rem; font-weight: 700; }
+    .day-date-lbl.outside-month { color: var(--blue); font-style: italic; }
+    .day-date-lbl.outside-month::after { content: ' *'; font-size: 0.65rem; }
+
+    /* Available/unavailable toggle button */
+    .avail-toggle { font-size: 0.72rem; font-weight: 600; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--border); cursor: pointer; background: #f1f5f9; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+    .avail-toggle.on { background: var(--green); color: white; border-color: var(--green); }
+
+    /* Time windows */
+    .windows-list { display: flex; flex-direction: column; gap: 6px; }
+    .window-row { display: flex; align-items: center; gap: 4px; }
+    .time-sel { flex: 1; min-width: 0; padding: 4px 4px; font-size: 0.78rem; border: 1px solid var(--border); border-radius: 4px; background: white; cursor: pointer; }
+    .to-label { font-size: 0.75rem; color: var(--muted); flex-shrink: 0; }
+    .btn-remove-win { background: none; border: none; color: #aaa; font-size: 1rem; cursor: pointer; padding: 0 2px; flex-shrink: 0; line-height: 1; }
+    .btn-remove-win:hover { color: var(--red); }
+
+    /* Add window & apply */
+    .btn-add-win { margin-top: 6px; background: none; border: 1px dashed #aaa; border-radius: 4px; color: var(--muted); font-size: 0.75rem; padding: 3px 8px; cursor: pointer; width: 100%; }
+    .btn-add-win:hover { border-color: var(--blue); color: var(--blue); background: #f0f7ff; }
+    .apply-row { margin-top: 6px; }
+    .weekday-apply { font-size: 0.72rem; color: var(--blue); cursor: pointer; text-decoration: underline; }
+    .day-error { color: var(--red); font-size: 0.72rem; margin-top: 4px; }
+
+    /* Confirmation */
+    .confirmation { text-align: center; padding: 60px 20px; }
+    .confirmation .check { font-size: 4rem; color: var(--green); }
+
+    @media (max-width: 760px) { .calendar-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 520px) { .calendar-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 360px) { .calendar-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <h1>Peak PT Aide Scheduler</h1>
+      <p class="subtitle">Submit Your Availability</p>
+    </header>
+
+    <main id="app">
+      <!-- Step 1: name -->
+      <section id="step-name" class="card name-section">
+        <h2>Welcome!</h2>
+        <p style="color:var(--muted);margin-bottom:20px">Enter your name to get started. You'll then set your availability for the month.</p>
+        <div class="field">
+          <label for="name-input">Your Name</label>
+          <input id="name-input" type="text" placeholder="First and Last Name" autocomplete="name" autofocus>
+          <div id="name-error" class="error-msg" style="display:none"></div>
+        </div>
+        <button id="btn-next-name" class="btn btn-primary" style="margin-top:16px;width:100%">Continue</button>
+      </section>
+
+      <!-- Step 2: calendar -->
+      <section id="step-calendar" style="display:none">
+        <div class="section-header">
+          <div>
+            <h2 id="calendar-title">Your Availability</h2>
+            <p id="calendar-subtitle" class="subtitle"></p>
+          </div>
+          <button id="btn-submit" class="btn btn-primary" disabled>Submit Availability</button>
+        </div>
+
+        <!-- Days per week preference -->
+        <div style="max-width:420px;margin-bottom:20px">
+          <label for="preferred-days" style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:6px">How many days per week would you like to work? <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <input type="number" id="preferred-days" min="1" max="5" placeholder="e.g. 3" style="width:100px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.95rem">
+        </div>
+
+        <!-- Master controls -->
+        <div class="master-controls">
+          <strong>Quick-set all days:</strong>
+          <button id="btn-all-available" class="btn btn-secondary" style="font-size:0.85rem;padding:6px 14px">All Available (Full Day)</button>
+          <button id="btn-all-unavailable" class="btn btn-secondary" style="font-size:0.85rem;padding:6px 14px">All Unavailable</button>
+        </div>
+
+        <p style="color:var(--muted);font-size:0.85rem;margin-bottom:12px">
+          Toggle each day on/off and set your available hours. All days default to unavailable — mark only the days you can work.
+        </p>
+
+        <div id="calendar-grid" class="calendar-grid"></div>
+        <p id="outside-month-note" style="display:none;margin-top:10px;font-size:0.8rem;color:var(--muted)">
+          * Days marked in blue fall outside the primary schedule month but are included in the schedule period.
+        </p>
+
+        <div style="margin-top:24px;display:flex;justify-content:flex-end">
+          <button id="btn-submit-bottom" class="btn btn-primary" disabled>Submit Availability</button>
+        </div>
+        <div id="submit-error" class="error-msg" style="display:none;margin-top:12px"></div>
+      </section>
+
+      <!-- Confirmation -->
+      <section id="step-confirm" class="card confirmation" style="display:none">
+        <div class="check">&#10003;</div>
+        <h2>Availability Submitted!</h2>
+        <p id="confirm-msg"></p>
+        <p style="color:var(--muted);margin-top:8px;font-size:0.9rem">You may close this window.</p>
+      </section>
+
+      <!-- Error state -->
+      <section id="step-error" class="card" style="display:none;text-align:center;padding:40px">
+        <h2>Link Not Found</h2>
+        <p>This link may be invalid or expired. Please contact your manager for the correct link.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="/employee/employee.js"></script>
+</body>
+</html>

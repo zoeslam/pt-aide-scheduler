@@ -1,0 +1,17 @@
+{
+  "name": "peak-pt-aide-scheduler",
+  "version": "1.0.0",
+  "description": "Employee scheduling tool for Peak PT",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
+    "express": "^4.18.2"
+  }
+}
